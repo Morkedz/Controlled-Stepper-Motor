@@ -1,14 +1,14 @@
 #Stepmotor, have motor pins be on GPIO 17,18,19,20.
 import RPi.GPIO as GPIO
 from RpiMotorLib.RpiMotorLib import BYJMotor
-from matplotlib import pyplot as py
+from matplotlib import pyplot as plt
 import math
 import threading
 import time
 
 GPIO.setmode(GPIO.BCM)
 
-pins = [17,18,27,22]
+pins = [17,18,19,20]
 GPIO.setup(pins,GPIO.OUT)
 motor = BYJMotor("stepper", "28BYJ48")
 x = []
@@ -37,18 +37,18 @@ def loop():
     while True:
         rev = get_valid_input("Enter number of revolutions: ")
         steps = rev * 512
-        speed = get_valid_input("Enter angular speed in radians per seconds (max 1.5): ", float)
+        rpm = get_valid_input("Enter angular speed in rotations per minute: ", float)
         #need to correct speed conversion
-        delay = (2* math.pi)/(512*speed)
+        delay = 60/(rpm*4096)
         direction = -1
         while direction not in [0, 1]:
             direction = get_valid_input("Enter direction (0 for CW, 1 for CCW): ", int)
         
         is_ccw = (direction == 1)
 
-        print(f"Running: {rev} revolutions, {speed} rad/s, CCW={is_ccw}")
+        print(f"Running: {rev} revolutions, {rpm} rot/min, CCW={is_ccw}")
 
-        rad_per_step = (2*math.pi)/512*speed
+        rad_per_step = (2*math.pi)/512
         step_value = rad_per_step if is_ccw else -rad_per_step
         
         displacement += (step_value * steps)
@@ -66,6 +66,7 @@ if __name__ == "__main__":
         running = False
         plt.figure(figsize=(10,5))
         py.plot(x,y)
+        #Correct the Units
         plt.title("Angular Displacement as a function of time")
         plt.xlabel("Time (seconds)")
         plt.ylabel("Displacemene (radians)")
