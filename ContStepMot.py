@@ -16,14 +16,18 @@ y = []
 displacement = 0.0
 start_time = time.time()
 running = True
+accuracy = 1
+angvel = 0
 
 def bglogging():
+    #Implements a variation of Eulers method
     global displacement, running
     while running:
         elapsed = time.time()-start_time
         x.append(elapsed)
+        displacement += angvel*accuracy
         y.append(displacement)
-        time.sleep(0.1)
+        time.sleep(accuracy)
 
 def get_valid_input(prompt, value_type=float):
     while True:
@@ -33,7 +37,7 @@ def get_valid_input(prompt, value_type=float):
             print(f"Invalid input. Please enter a {value_type.__name__}.")
 
 def loop():
-    global displacement
+    global displacement, angvel
     while True:
         rev = get_valid_input("Enter number of revolutions: ")
         steps = rev * 512
@@ -47,15 +51,14 @@ def loop():
         is_ccw = (direction == 1)
 
         print(f"Running: {rev} revolutions, {rpm} rot/min, CCW={is_ccw}")
-
-        rad_per_step = (2*math.pi)/512
-        step_value = rad_per_step if is_ccw else -rad_per_step
         
-        displacement += (step_value * steps)
-            
+        pos = -1 if is_ccw else 1     
+
+        angvel = pos*(rpm*2*math.pi)/60
         
         # Execute movement
         motor.motor_run(pins, delay, steps, is_ccw, False, "half", 0.05)
+        angvel = 0
 
 if __name__ == "__main__":
     try:
@@ -65,8 +68,7 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         running = False
         plt.figure(figsize=(10,5))
-        py.plot(x,y)
-        #Correct the Units
+        plt.plot(x,y)
         plt.title("Angular Displacement as a function of time")
         plt.xlabel("Time (seconds)")
         plt.ylabel("Displacemene (radians)")
